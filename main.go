@@ -18,7 +18,8 @@ func main() {
 
 	address := ":" + strconv.FormatUint(uint64(configuration.Port), 10)
 
-	log.Print("memento started and listening on localhost", address)
+	LogYeti()
+	log.Print("Memento started and listening on localhost", address)
 
 	err := http.ListenAndServe(address, application.Handler)
 	if err != nil {
