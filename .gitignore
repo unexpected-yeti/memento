@@ -101,3 +101,6 @@ tags
 
 
 # End of https://www.gitignore.io/api/go,vim,code,intellij
+
+# Custom
+memento
