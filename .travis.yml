@@ -7,3 +7,4 @@ go:
 
 script:
   - go get -v -t .
+  - go test ./...
