@@ -1,0 +1,162 @@
+swagger: "2.0"
+info:
+  title: Memento API
+  version: 1.0.0
+
+host: api.memento.local
+basePath: /v1
+schemes:
+  - http
+  
+paths:
+  /memes/new:
+    get:
+      summary: Returns a collection of the most current Memes.
+      parameters:
+        - $ref: '#/parameters/maxNumberParam'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Memes'
+
+  /memes/top:
+    get:
+      summary: Returns a collection of the best voted Memes.
+      parameters:
+        - $ref: '#/parameters/maxNumberParam'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Memes'
+
+  /memes/rising:
+    get:
+      summary: Returns a collection of rising Memes.
+      parameters:
+        - $ref: '#/parameters/maxNumberParam'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Memes'
+
+  /memes/random:
+    get:
+      summary: Returns a collection of random Memes.
+      parameters:
+        - $ref: '#/parameters/maxNumberParam'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Memes'
+
+  /memes/{memeId}:
+    get:
+      summary: Returns a Meme by ID.
+      parameters:
+        - in: path
+          name: memeId
+          required: true
+          type: integer
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Meme'
+            
+    delete:
+      summary: Deletes a Meme by ID.
+      parameters:
+        - in: path
+          name: memeId
+          required: true
+          type: integer
+      responses:
+        204:
+          description: OK
+
+  /memes:
+    get:
+      summary: Returns a list of memes
+      parameters:
+        - $ref: '#/parameters/maxNumberParam'
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Meme'
+    post:
+      summary: Creates a new Meme.
+      parameters:
+        - in: body
+          name: meme
+          schema:
+            $ref: '#/definitions/Meme'
+      responses:
+        200:
+          description: OK
+
+definitions:
+
+  Reaction:
+    properties:
+      value:
+        type: string
+        enum: ['-2', '-1', '0', '+1', '2', 'high potential']
+        example: 'high potential'
+    required:
+      - value
+        
+  Meme:
+    properties:
+      id:
+        type: integer
+        example: 4
+      title:
+        type: string
+        example: "Look at it!"
+      imageData:
+        type: string
+        example: 'base64 encoded image [...]'
+      reactions:
+        type: array
+        items:
+          - $ref: '#/definitions/Reaction'
+    required:
+      - id
+      - title
+      - imageData
+      
+  Memes:
+    properties: 
+      size:
+        type: number
+      page:
+        type: number
+      pagelen:
+        type: number
+      next:
+        type: string
+        format: uri
+      previous:
+        type: string
+        format: uri
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/Meme'
+
+parameters:
+  maxNumberParam:
+      name: max
+      in: query
+      type: integer
+      required: true
+      description: Maximum number of Memes to return
