@@ -53,31 +53,6 @@ paths:
           schema:
             $ref: '#/definitions/Memes'
 
-  /memes/{memeId}:
-    get:
-      summary: Returns a Meme by ID.
-      parameters:
-        - in: path
-          name: memeId
-          required: true
-          type: integer
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: '#/definitions/Meme'
-            
-    delete:
-      summary: Deletes a Meme by ID.
-      parameters:
-        - in: path
-          name: memeId
-          required: true
-          type: integer
-      responses:
-        204:
-          description: OK
-
   /memes:
     get:
       summary: Returns a list of memes
@@ -103,10 +78,84 @@ paths:
         200:
           description: OK
 
-definitions:
+  /memes/{memeId}:
+    get:
+      summary: Returns a Meme by ID.
+      parameters:
+        - in: path
+          name: memeId
+          required: true
+          type: integer
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Meme'
+            
+    delete:
+      summary: Deletes a Meme by ID.
+      parameters:
+        - in: path
+          name: memeId
+          required: true
+          type: integer
+      responses:
+        204:
+          description: OK
 
+  /memes/{memeId}/reactions:
+    post:
+      summary: Posts a new reaction on this Meme.
+      parameters:
+        - in: path
+          name: memeId
+          required: true
+          type: integer
+        - in: body
+          name: reaction
+          schema:
+            $ref: '#/definitions/Reaction'
+      responses:
+        200:
+          description: OK
+    get:
+      summary: Returns a list of Reactions on this Meme.
+      parameters:
+        - in: path
+          name: memeId
+          required: true
+          type: integer
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Reaction'
+
+  /memes/{memeId}/reactions/{reactionId}:
+    delete:
+      summary: Delete a single reaction on a Meme.
+      parameters:
+        - in: path
+          name: memeId
+          required: true
+          type: integer
+
+        - in: path
+          name: reactionId
+          required: true
+          type: integer
+      responses:
+        204:
+          description: OK
+
+definitions:
   Reaction:
     properties:
+      id:
+        type: integer
+        example: 1
       value:
         type: string
         enum: ['-2', '-1', '0', '+1', '2', 'high potential']
@@ -130,7 +179,6 @@ definitions:
         items:
           - $ref: '#/definitions/Reaction'
     required:
-      - id
       - title
       - imageData
       
