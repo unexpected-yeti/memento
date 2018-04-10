@@ -109,7 +109,7 @@ definitions:
     properties:
       value:
         type: string
-        enum: ['-2', '-1', '0', '+1', '2', 'high potential']
+        enum: ['-1', '0', '+1', '2', 'high potential']
         example: 'high potential'
     required:
       - value
