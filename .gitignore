@@ -1,4 +1,12 @@
-# Created by https://www.gitignore.io/api/go,intellij
+
+# Created by https://www.gitignore.io/api/go,vim,code,intellij
+
+### Code ###
+# Visual Studio Code - https://code.visualstudio.com/
+.settings/
+.vscode/
+tsconfig.json
+jsconfig.json
 
 ### Go ###
 # Binaries for programs and plugins
@@ -79,5 +87,20 @@ fabric.properties
 # Sonarlint plugin
 .idea/sonarlint
 
+### Vim ###
+# swap
+.sw[a-p]
+.*.sw[a-p]
+# session
+Session.vim
+# temporary
+.netrwhist
+*~
+# auto-generated tag files
+tags
 
-# End of https://www.gitignore.io/api/go,intellij
+
+# End of https://www.gitignore.io/api/go,vim,code,intellij
+
+# Custom
+memento
