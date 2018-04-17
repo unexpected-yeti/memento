@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/unexpected-yeti/memento/app"
+	"github.com/unexpected-yeti/memento/app/database"
 	"github.com/unexpected-yeti/memento/config"
 )
 
@@ -13,13 +14,15 @@ func main() {
 
 	application := app.App{}
 	configuration := config.GetConfig()
+	database := database.NewFSDatastore(configuration.DataDir)
 
-	application.Initialize(configuration)
+	application.Initialize(configuration, database)
 
-	address := ":" + strconv.FormatUint(uint64(configuration.Port), 10)
+	address := fmt.Sprintf(":%d", configuration.Port)
 
 	LogYeti()
 	log.Print("Memento started and listening on localhost", address)
+	log.Print("Using FSDatastore, serving data from ", configuration.DataDir)
 
 	err := http.ListenAndServe(address, application.Handler)
 	if err != nil {

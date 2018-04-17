@@ -1,12 +1,14 @@
 package config
 
 import (
-	"github.com/caarlos0/env"
 	"log"
+
+	"github.com/caarlos0/env"
 )
 
 type Config struct {
-	Port uint `env:"MEM_PORT" envDefault:"8080"`
+	Port    uint   `env:"MEM_PORT" envDefault:"8080"`
+	DataDir string `env:"MEM_DATADIR" envDefault:"memento_data/"`
 }
 
 func GetConfig() *Config {

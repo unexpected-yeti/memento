@@ -1,4 +1,4 @@
-package app
+package database
 
 // Meme struct is the representation of a Meme in Memento.
 type Meme struct {

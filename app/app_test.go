@@ -3,6 +3,7 @@ package app
 import (
 	"bufio"
 	"encoding/base64"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -11,17 +12,25 @@ import (
 
 	"gopkg.in/gavv/httpexpect.v1"
 
+	"github.com/unexpected-yeti/memento/app/database"
 	"github.com/unexpected-yeti/memento/config"
 )
 
-func getAppHandler() http.Handler {
-
+func getApp() App {
 	configuration := config.Config{}
 	application := App{}
 
-	application.Initialize(&configuration)
+	// Setup temporary fs-datastore
+	dir, err := ioutil.TempDir("", "testfiles")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	return application.Handler
+	db := database.NewFSDatastore(dir)
+
+	application.Initialize(&configuration, db)
+
+	return application
 }
 
 func readFileToBase64(path string) (string, error) {
@@ -47,9 +56,9 @@ func readFileToBase64(path string) (string, error) {
 
 func TestAcceptPngMeme(t *testing.T) {
 
-	handler := getAppHandler()
+	app := getApp()
 
-	server := httptest.NewServer(handler)
+	server := httptest.NewServer(app.Handler)
 	defer server.Close()
 
 	e := httpexpect.New(t, server.URL)
@@ -69,9 +78,9 @@ func TestAcceptPngMeme(t *testing.T) {
 
 func TestAcceptGifMeme(t *testing.T) {
 
-	handler := getAppHandler()
+	app := getApp()
 
-	server := httptest.NewServer(handler)
+	server := httptest.NewServer(app.Handler)
 	defer server.Close()
 
 	e := httpexpect.New(t, server.URL)
@@ -87,4 +96,55 @@ func TestAcceptGifMeme(t *testing.T) {
 	}
 
 	e.POST("/memes").WithJSON(payload).Expect().Status(http.StatusOK)
+}
+
+func TestGetEmptyMemeList(t *testing.T) {
+	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	e.GET("/memes").Expect().Status(http.StatusOK).JSON().Array().Empty()
+}
+
+func TestGetAllMemes(t *testing.T) {
+	app := getApp()
+
+	meme := database.Meme{Title: "foobar", ImageData: "test"}
+	app.Datastore.Store(&meme)
+
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	e.GET("/memes").
+		Expect().
+		Status(http.StatusOK).
+		JSON().
+		Array().
+		Length().
+		Equal(1)
+}
+
+func TestGetMeme(t *testing.T) {
+	app := getApp()
+
+	meme := database.Meme{Title: "foobar", ImageData: "test"}
+	app.Datastore.Store(&meme)
+
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	obj := e.GET("/memes/1").Expect().Status(http.StatusOK).JSON().Object()
+
+	obj.Value("id").Equal(1)
+	obj.Value("title").Equal("foobar")
+	obj.Value("imageData").Equal("test")
+	// TODO(claudio)
+	// obj.Value("reactions").Array().Empty()
+	obj.Value("reactions").Equal(nil)
 }

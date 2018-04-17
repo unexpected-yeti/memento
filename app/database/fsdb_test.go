@@ -1,4 +1,4 @@
-package app
+package database
 
 import (
 	"io/ioutil"
@@ -56,6 +56,23 @@ func TestGet(t *testing.T) {
 		t.Errorf("Actual and stored memes were not equal, \ngot: %+v,\nwant %+v", stored, meme)
 	}
 
+}
+
+func TestGetAll(t *testing.T) {
+	db := setupTestDB()
+	defer db.Close()
+
+	meme := Meme{ImageData: "binary...", Title: "MyTitle"}
+	db.Store(&meme)
+
+	memes, err := db.GetAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(memes) != 1 {
+		t.Errorf("Actual and stored memes were not equal, \ngot: %+v,\nwant %+v", memes, meme)
+	}
 }
 
 // If a Meme can not be found, return error

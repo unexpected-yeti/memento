@@ -1,4 +1,4 @@
-package app
+package database
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -40,6 +41,39 @@ func (db *FSDatastore) Get(memeID int) (Meme, error) {
 	return meme, nil
 }
 
+// GetAll returns all saved Memes.
+func (db *FSDatastore) GetAll() ([]Meme, error) {
+	memes := make([]Meme, 0)
+
+	var ids []int
+	err := filepath.Walk(db.RootDir, func(path string, info os.FileInfo, err error) error {
+		fname := strings.Split(info.Name(), ".")
+
+		if len(fname) == 2 && fname[1] == "json" {
+			id, err := strconv.Atoi(fname[0])
+			if err != nil {
+				return err
+			}
+			ids = append(ids, id)
+		}
+		return nil
+	})
+
+	for _, id := range ids {
+		meme, err := db.Get(id)
+		if err != nil {
+			return memes, err
+		}
+		memes = append(memes, meme)
+	}
+
+	if err != nil {
+		return memes, err
+	}
+
+	return memes, nil
+}
+
 // Delete removes a Meme from the filesystem.
 func (db *FSDatastore) Delete(memeID int) error {
 	fname := db.getFilename(memeID)
@@ -63,8 +97,8 @@ func (db *FSDatastore) Store(meme *Meme) error {
 }
 
 // Update will overwrite an existing Meme.
-func (db *FSDatastore) Update(meme Meme) error {
-	fname := db.getFilename(meme.ID)
+func (db *FSDatastore) Update(memeID int, meme Meme) error {
+	fname := db.getFilename(memeID)
 	err := db.write(fname, meme)
 	if err != nil {
 		return err
@@ -83,7 +117,7 @@ func (db *FSDatastore) AddReaction(memeID int, reaction *Reaction) error {
 	reaction.ID = len(meme.Reactions) + 1
 	meme.Reactions = append(meme.Reactions, *reaction)
 
-	db.Update(meme)
+	db.Update(meme.ID, meme)
 	return nil
 }
 
@@ -95,7 +129,7 @@ func (db *FSDatastore) RemoveReaction(memeID int, reactionID int) error {
 		return err
 	}
 	meme.Reactions = append(meme.Reactions[:index], meme.Reactions[index+1:]...)
-	db.Update(meme)
+	db.Update(meme.ID, meme)
 	return nil
 }
 

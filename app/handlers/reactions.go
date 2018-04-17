@@ -1,12 +1,18 @@
 package handlers
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
+
 	"github.com/go-zoo/bone"
+	"github.com/unexpected-yeti/memento/app/database"
 )
 
-func GetAllReactions(w http.ResponseWriter, r *http.Request) {
+type Reactions struct {
+	DB database.Datastore
+}
+
+func (reactions *Reactions) GetAllReactions(w http.ResponseWriter, r *http.Request) {
 
 	// Get the meme memeId
 	memeId := bone.GetValue(r, "meme")
@@ -16,7 +22,7 @@ func GetAllReactions(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, r.URL.EscapedPath())
 }
 
-func GetReaction(w http.ResponseWriter, r *http.Request) {
+func (reactions *Reactions) GetReaction(w http.ResponseWriter, r *http.Request) {
 
 	// Get the meme id
 	memeId := bone.GetValue(r, "meme")
@@ -31,7 +37,7 @@ func GetReaction(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, r.URL.EscapedPath())
 }
 
-func DeleteReaction(w http.ResponseWriter, r *http.Request) {
+func (reactions *Reactions) DeleteReaction(w http.ResponseWriter, r *http.Request) {
 
 	// Get the meme id
 	memeId := bone.GetValue(r, "meme")
@@ -46,7 +52,7 @@ func DeleteReaction(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, r.URL.EscapedPath())
 }
 
-func CreateReaction(w http.ResponseWriter, r *http.Request) {
+func (reactions *Reactions) CreateReaction(w http.ResponseWriter, r *http.Request) {
 
 	// Get the meme memeId
 	memeId := bone.GetValue(r, "meme")
