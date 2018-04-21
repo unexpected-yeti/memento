@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -23,14 +22,7 @@ func (memes *Memes) GetAllMemes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	js, err := json.Marshal(all)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	respondJSON(w, http.StatusOK, all)
 }
 
 func (memes *Memes) GetTopMemes(w http.ResponseWriter, r *http.Request) {
@@ -46,21 +38,15 @@ func (memes *Memes) GetMeme(w http.ResponseWriter, r *http.Request) {
 	// Get the meme memeId
 	memeId, err := strconv.Atoi(bone.GetValue(r, "meme"))
 
-	// TODO(claudio): Check if meme was actually found
+	// TODO(claudio): Check if meme was actually found, else
+	// 				  return 404
 	meme, err := memes.DB.Get(memeId)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	js, err := json.Marshal(meme)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	respondJSON(w, http.StatusOK, meme)
 }
 
 func (memes *Memes) GetRandomMeme(w http.ResponseWriter, r *http.Request) {
@@ -68,15 +54,32 @@ func (memes *Memes) GetRandomMeme(w http.ResponseWriter, r *http.Request) {
 }
 
 func (memes *Memes) DeleteMeme(w http.ResponseWriter, r *http.Request) {
+	memeId, err := strconv.Atoi(bone.GetValue(r, "meme"))
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
-	// Get the meme memeId
-	memeId := bone.GetValue(r, "meme")
+	err = memes.DB.Delete(memeId)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
-	w.Write([]byte(memeId))
-
-	fmt.Fprint(w, r.URL.EscapedPath())
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (memes *Memes) CreateMeme(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, r.URL.EscapedPath())
+	title := bone.GetValue(r, "title")
+	imageData := bone.GetValue(r, "imageData")
+
+	meme := database.Meme{Title: title, ImageData: imageData}
+	err := memes.DB.Store(&meme)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Location", fmt.Sprintf("/memes/%d", meme.ID))
+	w.WriteHeader(http.StatusCreated)
 }
