@@ -102,61 +102,166 @@ func TestAcceptGifMeme(t *testing.T) {
 	e.POST("/memes").WithJSON(payload).Expect().Status(http.StatusCreated)
 }
 
+// GET /memes
+func TestGetAllMemes(t *testing.T) {
+	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	meme := database.Meme{Title: "foobar", ImageData: "test"}
+	app.Datastore.Store(&meme)
+
+	e := httpexpect.New(t, server.URL)
+
+	e.GET("/memes").
+		Expect().
+		Status(http.StatusOK).
+		JSON().Array().Length().Equal(1)
+}
+
 func TestGetEmptyMemeList(t *testing.T) {
 	server := newTestServer()
 	defer server.Close()
 
 	e := httpexpect.New(t, server.URL)
 
-	e.GET("/memes").Expect().Status(http.StatusOK).JSON().Array().Empty()
+	e.GET("/memes").
+		Expect().
+		Status(http.StatusOK).
+		JSON().Array().Empty()
 }
 
-func TestGetAllMemes(t *testing.T) {
-	app := getApp()
-
-	meme := database.Meme{Title: "foobar", ImageData: "test"}
-	app.Datastore.Store(&meme)
-
-	server := httptest.NewServer(app.Handler)
-	defer server.Close()
-
-	e := httpexpect.New(t, server.URL)
-
-	e.GET("/memes").Expect().Status(http.StatusOK).JSON().
-		Array().Length().Equal(1)
-}
-
+// GET /meme/:id
 func TestGetMeme(t *testing.T) {
 	app := getApp()
-
-	meme := database.Meme{Title: "foobar", ImageData: "test"}
-	app.Datastore.Store(&meme)
-
 	server := httptest.NewServer(app.Handler)
 	defer server.Close()
 
 	e := httpexpect.New(t, server.URL)
 
-	obj := e.GET("/memes/1").Expect().Status(http.StatusOK).JSON().Object()
+	app.Datastore.Store(&database.Meme{
+		Title:     "foobar",
+		ImageData: "test",
+		Reactions: make([]database.Reaction, 0),
+	})
 
-	obj.Value("id").Equal(1)
-	obj.Value("title").Equal("foobar")
-	obj.Value("imageData").Equal("test")
-	// TODO(claudio)
-	// obj.Value("reactions").Array().Empty()
-	obj.Value("reactions").Equal(nil)
+	schema, _ := ioutil.ReadFile("schemas/meme.json")
+	e.GET("/memes/1").
+		Expect().
+		Status(http.StatusOK).
+		JSON().Schema(schema)
 }
 
+// DELETE /meme/:id
 func TestDeleteMeme(t *testing.T) {
 	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
 
 	meme := database.Meme{Title: "foobar", ImageData: "test"}
 	app.Datastore.Store(&meme)
 
+	e := httpexpect.New(t, server.URL)
+
+	e.DELETE("/memes/1").
+		Expect().
+		Status(http.StatusNoContent)
+
+	if meme, _ := app.Datastore.Get(1); meme.ID == 1 {
+		t.Error("Meme should be deleted, but is present!")
+	}
+}
+
+// POST /memes/:id/reactions
+func TestAddReactionToMeme(t *testing.T) {
+	app := getApp()
 	server := httptest.NewServer(app.Handler)
 	defer server.Close()
 
 	e := httpexpect.New(t, server.URL)
 
-	e.DELETE("/memes/1").Expect().Status(http.StatusNoContent)
+	app.Datastore.Store(&database.Meme{
+		Title:     "foobar",
+		ImageData: "test",
+	})
+
+	payload := map[string]interface{}{
+		"value": "high potential",
+	}
+
+	e.POST("/memes/1/reactions").WithJSON(payload).
+		Expect().
+		Status(http.StatusCreated).
+		Header("Location").Match("/memes/1/reactions/1")
+}
+
+func TestGetReaction(t *testing.T) {
+	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	meme := database.Meme{
+		Title:     "foobar",
+		ImageData: "test",
+	}
+
+	app.Datastore.Store(&meme)
+	app.Datastore.AddReaction(meme.ID, &database.Reaction{
+		Value: "high potential",
+	})
+
+	obj := e.GET("/memes/1/reactions/1").
+		Expect().
+		JSON().Object()
+
+	obj.Value("value").Equal("high potential")
+}
+
+func TestGetReaction404(t *testing.T) {
+	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	meme := database.Meme{
+		Title:     "foobar",
+		ImageData: "test",
+	}
+
+	app.Datastore.Store(&meme)
+
+	e.GET("/memes/1/reactions/10").
+		Expect().
+		Status(http.StatusNotFound)
+}
+func TestGetReactions(t *testing.T) {
+	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	meme := database.Meme{
+		Title:     "foobar",
+		ImageData: "test",
+	}
+
+	app.Datastore.Store(&meme)
+
+	reactions := []database.Reaction{
+		database.Reaction{Value: "-1"},
+		database.Reaction{Value: "2"},
+		database.Reaction{Value: "high potential"},
+	}
+
+	for _, reaction := range reactions {
+		app.Datastore.AddReaction(meme.ID, &reaction)
+	}
+
+	e.GET("/memes/1/reactions").
+		Expect().
+		JSON().Array().NotEmpty()
 }

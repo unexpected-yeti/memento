@@ -52,7 +52,7 @@ func (app *App) Initialize(config *config.Config, db database.Datastore) {
 	multiplexer.Post("/memes", http.HandlerFunc(memes.CreateMeme))
 
 	// Single reactions
-	multiplexer.Post("/memes:meme/reactions", http.HandlerFunc(reactions.CreateReaction))
+	multiplexer.Post("/memes/:meme/reactions", http.HandlerFunc(reactions.CreateReaction))
 
 	app.Handler = multiplexer
 }

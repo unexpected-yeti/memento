@@ -1,0 +1,31 @@
+{
+    "title": "Meme",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "integer",
+            "minimum": 0
+        },
+        "title": {
+            "type": "string"
+        },
+        "imageData": {
+            "type": "string"
+        },
+        "reactions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "value": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}
