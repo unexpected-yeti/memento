@@ -237,6 +237,34 @@ func TestGetReaction404(t *testing.T) {
 		Expect().
 		Status(http.StatusNotFound)
 }
+
+// DELETE /memes/:meme/reactions/:reaction
+func TestDeleteReactionFromMeme(t *testing.T) {
+	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	meme := database.Meme{
+		Title:     "foobar",
+		ImageData: "test",
+	}
+
+	app.Datastore.Store(&meme)
+	app.Datastore.AddReaction(meme.ID, &database.Reaction{Value: "-1"})
+
+	e.DELETE("/memes/1/reactions/1").
+		Expect().
+		Status(http.StatusNoContent)
+
+	meme, _ = app.Datastore.Get(1)
+	if len(meme.Reactions) > 0 {
+		t.Error("Reaction should be deleted, but is present!")
+	}
+}
+
+// GET /memes/:meme/reactions
 func TestGetReactions(t *testing.T) {
 	app := getApp()
 	server := httptest.NewServer(app.Handler)
