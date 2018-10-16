@@ -1,0 +1,281 @@
+openapi: 3.0.0
+info:
+    version: 1.0.0
+    title: 'Memento Service'
+    contact:
+      name: 'Unexpected Yeti'
+tags:
+  - name: Memes
+  - name: Reactions
+  - name: Users
+paths:
+  /memes:
+    get:
+      summary: Get all memes
+      operationId: GetMemes
+      tags:
+      - Memes
+      security:
+      - CookieAuth: []
+      responses:
+        200:
+          $ref: '#/components/responses/PaginatedMemesResponse'
+    post:
+      summary: Create a meme
+      operationId: CreateMeme
+      tags:
+      - Memes
+      security:
+      - CookieAuth: []
+      requestBody:
+        description: 'The meme to be created'
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                imageData:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: 'The created meme'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Meme'
+  /memes/{id}:
+    get:
+      summary: 'Get a meme'
+      operationId: GetMeme
+      tags:
+      - Memes
+      security:
+      - CookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        description: 'ID of the meme'
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: 'The specified meme'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Meme'
+    delete:
+      summary: 'Delete a meme'
+      operationId: DeleteMeme
+      tags:
+      - Memes
+      security:
+      - CookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        description: 'ID of the meme'
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: 'Meme deleted'
+  /memes/{id}/reactions:
+    get:
+      summary: Get the number of reactions associated with a meme
+      operationId: GetReactionNumbers
+      tags:
+      - Reactions
+      - Memes
+      security:
+      - CookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        description: 'ID of the meme to get the number of associated reactions on'
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: 'The number of associated reactions'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  '-1':
+                    type: integer
+                    minimum: 0
+                    default: 0
+                    example: 20
+                  '0':
+                    type: integer
+                    minimum: 0
+                    default: 0
+                    example: 1
+                  '+1':
+                    type: integer
+                    minimum: 0
+                    default: 0
+                    example: 8
+                  '+2':
+                    type: integer
+                    minimum: 0
+                    default: 0
+                    example: 12
+                  'high potential':
+                    type: integer
+                    minimum: 0
+                    default: 0
+                    example: 11
+    post:
+      summary: Create a reaction on a meme
+      operationId: CreateReaction
+      tags:
+      - Reactions
+      - Memes
+      security:
+      - CookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        description: 'ID of the meme to create a reaction on'
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: 'The reaction to create on a meme'
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+              enum: ['-1', '0', '+1', '+2', 'high potential']
+              example: 'high potential'
+      responses:
+        200:
+          description: 'The created reaction on a meme'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reaction'
+  /login:
+    post:
+      summary: 'Logs in and returns the authentication  cookie'
+      operationId: loginUser
+      tags:
+      - Users
+      requestBody:
+        required: true
+        description: 'The username, password credentials'
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+              - username
+              - password
+      security: []
+      responses:
+        200:
+          description: 'Successfully aauthenticated'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: 'SESSIONID=abcd1234; PATH=/; HttpOnly'
+      
+components:
+  schemas:
+    Meme:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'ac7958da-a170-496c-a2ea-1b0ab479fd60'
+        title:
+          type: string
+          example: 'It is a trap'
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reaction'
+        imageData:
+          type: string
+          format: binary
+          description: 'A base64 encoded image'
+      required:
+      - id
+      - title
+      - imageData
+    Reaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'ac7958da-a170-496c-a2ea-1b0ab479fd60'
+        value:
+          type: string
+          enum: ['-1', '0', '+1', '+2', 'high potential']
+          example: 'high potential'
+      required:
+      - id
+      - value
+  responses:
+    PaginatedMemesResponse:
+      description: 'A paginated list of memes'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              size:
+                type: number
+              page:
+                type: number
+              pagelen:
+                type: number
+              next:
+                type: number
+              previous:
+                type: string
+                format: uri
+              values:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Meme'
+            required:
+            - size
+            - page
+            - pagelen
+            - next
+            - previous
+    ProgrammierFehler:
+      description: Ein unerwarteter Fehler ist aufgetreten
+      content:
+        application/xml:
+          schema:
+            type: string
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: SESSIONID
