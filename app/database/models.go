@@ -4,6 +4,7 @@ package database
 type Meme struct {
 	ID        int        `json:"id"`
 	Title     string     `json:"title"`
+	Timestamp int        `json:"timestamp"`
 	ImageData string     `json:"imageData"`
 	Reactions []Reaction `json:"reactions"`
 }

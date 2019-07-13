@@ -12,6 +12,9 @@
         "imageData": {
             "type": "string"
         },
+        "timestamp": {
+            "type": "integer"
+        },
         "reactions": {
             "type": "array",
             "items": {

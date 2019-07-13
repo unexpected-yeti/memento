@@ -152,6 +152,50 @@ func TestGetMeme(t *testing.T) {
 		JSON().Schema(schema)
 }
 
+func TestGetNewMemes(t *testing.T) {
+	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	app.Datastore.Store(&database.Meme{
+		Title:     "foobar",
+		ImageData: "test",
+		Reactions: make([]database.Reaction, 0),
+	})
+
+	schema, _ := ioutil.ReadFile("schemas/meme.json")
+	memes := e.GET("/memes/new").
+		Expect().
+		Status(http.StatusOK).
+		JSON().Array()
+
+	for _, entry := range memes.Iter() {
+		entry.Schema(schema)
+	}
+}
+
+func TestGetRandomMeme(t *testing.T) {
+	app := getApp()
+	server := httptest.NewServer(app.Handler)
+	defer server.Close()
+
+	e := httpexpect.New(t, server.URL)
+
+	app.Datastore.Store(&database.Meme{
+		Title:     "foobar",
+		ImageData: "test",
+		Reactions: make([]database.Reaction, 0),
+	})
+
+	schema, _ := ioutil.ReadFile("schemas/meme.json")
+	e.GET("/memes/random").
+		Expect().
+		Status(http.StatusOK).
+		JSON().Schema(schema)
+}
+
 // DELETE /meme/:id
 func TestDeleteMeme(t *testing.T) {
 	app := getApp()

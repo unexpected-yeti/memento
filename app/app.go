@@ -31,8 +31,10 @@ func (app *App) Initialize(config *config.Config, db database.Datastore) {
 	multiplexer.Get("/memes/new", http.HandlerFunc(memes.GetNewMemes))
 
 	// Single memes
-	multiplexer.Get("/memes/:meme", http.HandlerFunc(memes.GetMeme))
+	// Note: Order matters. Endpoints expecting an ID must be
+	// last in order.
 	multiplexer.Get("/memes/random", http.HandlerFunc(memes.GetRandomMeme))
+	multiplexer.Get("/memes/:meme", http.HandlerFunc(memes.GetMeme))
 
 	// Sets of reactions
 	multiplexer.Get("/memes/:meme/reactions", http.HandlerFunc(reactions.GetAllReactions))

@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"strconv"
 
@@ -20,7 +22,12 @@ func (memes *Memes) CreateMeme(w http.ResponseWriter, r *http.Request) {
 	title := bone.GetValue(r, "title")
 	imageData := bone.GetValue(r, "imageData")
 
-	meme := database.Meme{Title: title, ImageData: imageData}
+	meme := database.Meme{
+		Title:     title,
+		Timestamp: int(time.Now().Unix()),
+		ImageData: imageData,
+	}
+
 	err := memes.DB.Store(&meme)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -78,12 +85,32 @@ func (memes *Memes) GetTopMemes(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, r.URL.EscapedPath())
 }
 
-// TODO
+// GetNewMemes
 func (memes *Memes) GetNewMemes(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, r.URL.EscapedPath())
+	// TODO(claudio): make configurable
+	var list []database.Meme
+
+	since := int(time.Now().Unix()) - (3 * 24 * 60 * 60)
+	// max, err := strconv.Atoi(bone.GetValue(r, "max"))
+
+	all, _ := memes.DB.GetAll()
+	for _, entry := range all {
+		if entry.Timestamp > since {
+			list = append(list, entry)
+		}
+	}
+
+	respondJSON(w, http.StatusOK, list)
 }
 
-// TODO
+// GetRandomMeme returns a random meme from the database.
 func (memes *Memes) GetRandomMeme(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, r.URL.EscapedPath())
+	all, err := memes.DB.GetAll()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	randomId := rand.Int31n(int32(len(all)))
+	respondJSON(w, http.StatusOK, all[randomId])
 }
